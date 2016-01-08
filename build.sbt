@@ -96,7 +96,7 @@ lazy val slickStore = (project in file("pscheduler-slick-store")).
     libraryDependencies ++= {
       Seq(
         "com.typesafe.slick"       %% "slick"                         % slickV,
-        "org.flywaydb"              % "flyway-core"                   % flywayV,
+        "org.flywaydb"              % "flyway-core"                   % flywayV       % "optional",
         "org.scalatest"            %% "scalatest"                     % scalaTestV    % "test",
         "com.typesafe.slick"       %% "slick-testkit"                 % slickV        % "test",
         "org.hsqldb"                % "hsqldb"                        % hsqldbV       % "test",
