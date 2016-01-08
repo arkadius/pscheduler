@@ -58,7 +58,9 @@ class PSchedulerSpec extends FlatSpec with Matchers with OptionValues with Scala
     ("optionalLastRun", "now", "schedule", "shouldRun"),
     (None,                                                    LocalDateTime.of(2015, 11, 24, 10, 0).atZone(UTC), Daily.atMidnight, true),
     (Some(LocalDateTime.of(2015, 11, 23, 10, 0).atZone(UTC)), LocalDateTime.of(2015, 11, 24, 10, 0).atZone(UTC), Daily.atMidnight, true),
-    (Some(LocalDateTime.of(2015, 11, 24,  9, 0).atZone(UTC)), LocalDateTime.of(2015, 11, 24, 10, 0).atZone(UTC), Daily.atMidnight, false)
+    (Some(LocalDateTime.of(2015, 11, 24,  9, 0).atZone(UTC)), LocalDateTime.of(2015, 11, 24, 10, 0).atZone(UTC), Daily.atMidnight, false),
+    (Some(LocalDateTime.of(2015, 11, 23, 10, 9).atZone(UTC)), LocalDateTime.of(2015, 11, 23, 11, 0).atZone(UTC), Hourly.onTheHour, true),
+    (Some(LocalDateTime.of(2015, 11, 23, 10, 9).atZone(UTC)), LocalDateTime.of(2015, 11, 23, 10, 59).atZone(UTC), Hourly.onTheHour, false)
   )
 
   it should "not run daily task if was started in the same day" in {

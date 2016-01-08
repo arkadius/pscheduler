@@ -15,6 +15,7 @@
  */
 package pl.touk.pscheduler
 
+import java.time.temporal.{ChronoUnit, ChronoField}
 import java.time.{LocalDateTime, LocalTime}
 
 trait TaskSchedule {
@@ -44,6 +45,27 @@ case class EveryNDays(days: Int, time: LocalTime = LocalTime.ofNanoOfDay(0))
   extends TaskSchedule with RunningImmediatelyOutstandingExecutions {
 
   override def shouldRun(lastRun: LocalDateTime, now: LocalDateTime): Boolean = {
-    lastRun.plusDays(days).`with`(time).isBefore(now)
+    !lastRun
+      .plusDays(days)
+      .`with`(time)
+      .isAfter(now)
+  }
+}
+
+object Hourly {
+  def atMinuteOfHour(minuteOfHour: Int) = EveryNHours(hours = 1, minuteOfHour)
+
+  def onTheHour = EveryNHours(hours = 1)
+}
+
+case class EveryNHours(hours: Int, minuteOfHour: Int = 0)
+  extends TaskSchedule with RunningImmediatelyOutstandingExecutions {
+
+  override def shouldRun(lastRun: LocalDateTime, now: LocalDateTime): Boolean = {
+    !lastRun
+      .plusHours(hours)
+      .truncatedTo(ChronoUnit.HOURS)
+      .`with`(ChronoField.MINUTE_OF_HOUR, minuteOfHour)
+      .isAfter(now)
   }
 }
