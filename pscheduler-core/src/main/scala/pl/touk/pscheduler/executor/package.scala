@@ -15,17 +15,16 @@
  */
 package pl.touk.pscheduler
 
-import _root_.akka.actor.{ActorSystem, Scheduler}
+import java.util.concurrent.{Executors, ScheduledExecutorService}
 
-import scala.concurrent.ExecutionContext
+package object executor {
+  implicit class ExecutorServiceSchedulerDefiner[P, CS, CI, C](builder: PSchedulerBuilder[P, CS, CI, C]) {
+    def withJavaScheduler(executor: ScheduledExecutorService) =
+      builder.withCheckScheduler(new ExecutorServiceScheduler(executor))
 
-package object akka {
-  implicit class AkkaSchedulerDefiner[P, CS, CI, C](builder: PSchedulerBuilder[P, CS, CI, C]) {
-    def withAkkaScheduler(scheduler: Scheduler)
-                         (implicit ec: ExecutionContext) =
-      builder.withCheckScheduler(new AkkaScheduler(scheduler, ec))
-
-    def withAkkaScheduler(system: ActorSystem) =
-      builder.withCheckScheduler(new AkkaScheduler(system.scheduler, system.dispatcher))
+    def withJavaScheduler() = {
+      val executor = Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory())
+      builder.withCheckScheduler(new ExecutorServiceScheduler(executor))
+    }
   }
 }

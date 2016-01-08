@@ -96,8 +96,7 @@ class MockTaskPersistence(stubbedSavedTasks: Seq[Task]) extends TasksPersistence
 object InstantScheduler extends InMemoryScheduler {
   @volatile var stopped = false
 
-  override def schedule(job: => Future[Unit], interval: Duration)
-                       (implicit ec: ExecutionContext): Cancellable = {
+  override def schedule(job: => Future[Unit], interval: Duration): Cancellable = {
     if (!stopped) job
     new Cancellable {
       override def cancel(): Unit = {

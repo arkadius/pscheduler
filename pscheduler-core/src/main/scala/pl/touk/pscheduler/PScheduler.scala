@@ -97,7 +97,8 @@ class PScheduler(persistence: TasksPersistence,
 }
 
 object PScheduler {
-  def builder = PSchedulerBuilder.withCheckInterval(Duration.ofMinutes(5))
+  import executor._
+  def builder = PSchedulerBuilder.withJavaScheduler().withCheckInterval(Duration.ofMinutes(5))
 }
 
 case class TaskConfiguration(taskName: String, schedule: TaskSchedule, run: () => Future[Unit])

@@ -20,8 +20,7 @@ import java.time.Duration
 import scala.concurrent.{ExecutionContext, Future}
 
 trait InMemoryScheduler {
-  def schedule(job: => Future[Unit], interval: Duration)
-              (implicit ec: ExecutionContext): Cancellable
+  def schedule(job: => Future[Unit], interval: Duration): Cancellable
 }
 
 trait Cancellable {

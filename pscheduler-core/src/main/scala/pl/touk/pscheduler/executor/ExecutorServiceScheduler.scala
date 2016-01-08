@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package pl.touk.pscheduler
+package pl.touk.pscheduler.executor
 
-import _root_.akka.actor.{ActorSystem, Scheduler}
+import java.time.Duration
+import java.util.concurrent.{ScheduledExecutorService, TimeUnit}
 
-import scala.concurrent.ExecutionContext
+import pl.touk.pscheduler.{Cancellable, InMemoryScheduler}
 
-package object akka {
-  implicit class AkkaSchedulerDefiner[P, CS, CI, C](builder: PSchedulerBuilder[P, CS, CI, C]) {
-    def withAkkaScheduler(scheduler: Scheduler)
-                         (implicit ec: ExecutionContext) =
-      builder.withCheckScheduler(new AkkaScheduler(scheduler, ec))
+import scala.concurrent.Future
 
-    def withAkkaScheduler(system: ActorSystem) =
-      builder.withCheckScheduler(new AkkaScheduler(system.scheduler, system.dispatcher))
+class ExecutorServiceScheduler(executor: ScheduledExecutorService) extends InMemoryScheduler {
+  override def schedule(job: => Future[Unit], interval: Duration): Cancellable = {
+    val future = executor.schedule(new Runnable {
+      override def run(): Unit = job
+    }, interval.toMillis, TimeUnit.MILLISECONDS)
+    new Cancellable {
+      override def cancel(): Unit = future.cancel(false)
+    }
   }
 }

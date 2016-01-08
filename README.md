@@ -4,27 +4,24 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/grade/9c33fb3a4ad24cb294472311ea4dc71c)](https://www.codacy.com/app/arek-burdach/pscheduler)
 
 *pscheduler* is a simple, lightweight, persistent scheduler. It's abstracting from in-memory scheduler which will be used for check that some task should be run and from persistence backend.
-Currently there are implemented *Akka* in-memory scheduler and *Slick* jdbc persistence in separate modules.
+Currently there are implemented *ScheduledExecutorService*-based and *Akka*-based in-memory scheduler and *Slick* jdbc persistence. Both *Akka* scheduler and *Slick* persistence are in separate modules.
 
 ## QuickStart
 
 In your sbt:
 
 ```sbt
-libraryDependencies += "pl.touk.pscheduler" %% "pscheduler-akka" % "0.1.0"
-libraryDependencies += "pl.touk.pscheduler" %% "pscheduler-slick-store" % "0.1.0"
+libraryDependencies += "pl.touk.pscheduler" %% "pscheduler-slick-store" % "0.2.0"
 ```
 
 And then start scheduler:
 
 ```scala
 import pl.touk.pscheduler._
-import pl.touk.pscheduler.akka._
 import pl.touk.pscheduler.slick._
 
 val pScheduler =
   PScheduler.builder
-    .withAkkaScheduler(scheduler)
     .withSlickJdbcPersistence(PostgresDriver, db)
     .withTasks(
       TaskConfiguration(
