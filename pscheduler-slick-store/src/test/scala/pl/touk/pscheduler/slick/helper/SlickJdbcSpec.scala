@@ -31,10 +31,8 @@ trait SlickJdbcSpec extends fixture.FlatSpec {
     val config = ConfigFactory.load()
     val db = JdbcBackend.Database.forConfig("db", config)
     try {
-      new RollbackingExecutor(driver, db).run { singleSessionDb =>
-        new DatabaseInitializer(singleSessionDb).initDatabase()
-        test(createFixture(singleSessionDb))
-      }
+      new DatabaseInitializer(db).initDatabase()
+      test(createFixture(db))
     } finally {
       db.close()
     }

@@ -53,10 +53,9 @@ val slf4jV = "1.7.13"
 val logbackV = "1.1.3"
 val scalaTestV = "3.0.0-M9"
 val scalacheckV = "1.12.5"
-val slickV = "3.0.3"
+val slickV = "3.1.1"
 val flywayV = "3.2.1"
 val hsqldbV = "2.3.3"
-val hikariV = "2.4.2"
 
 lazy val core = (project in file("pscheduler-core")).
   settings(commonSettings).
@@ -98,9 +97,8 @@ lazy val slickStore = (project in file("pscheduler-slick-store")).
         "com.typesafe.slick"       %% "slick"                         % slickV,
         "org.flywaydb"              % "flyway-core"                   % flywayV       % "optional",
         "org.scalatest"            %% "scalatest"                     % scalaTestV    % "test",
-        "com.typesafe.slick"       %% "slick-testkit"                 % slickV        % "test",
-        "org.hsqldb"                % "hsqldb"                        % hsqldbV       % "test",
-        "com.zaxxer"                % "HikariCP"                      % hikariV       % "test"
+        "com.typesafe.slick"       %% "slick-hikaricp"                % slickV        % "test",
+        "org.hsqldb"                % "hsqldb"                        % hsqldbV       % "test"
       )
     }
   ).
