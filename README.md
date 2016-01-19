@@ -11,7 +11,7 @@ Currently there are implemented *ScheduledExecutorService*-based and *Akka*-base
 In your sbt:
 
 ```sbt
-libraryDependencies += "pl.touk.pscheduler" %% "pscheduler-slick-store" % "0.2.0"
+libraryDependencies += "pl.touk.pscheduler" %% "pscheduler-slick-store" % "0.3.0"
 ```
 
 And then start scheduler:
