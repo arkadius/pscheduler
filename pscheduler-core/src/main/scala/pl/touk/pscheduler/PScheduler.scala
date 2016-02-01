@@ -33,10 +33,17 @@ class PScheduler(persistence: TasksPersistence,
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  @volatile var scheduledCheck: Option[Cancellable] = None
+  private var ran: Boolean = false
+  private var scheduledCheck: Option[Cancellable] = None
+  @volatile var currentTaskRunFuture: Future[Unit] = Future.successful(Unit)
 
-  def start()(implicit ec: ExecutionContext): Future[Unit] = {
-    runScheduledTasks()
+  def start()(implicit ec: ExecutionContext): Unit = {
+    synchronized {
+      if (!ran) {
+        ran = true
+        runScheduledTasks()
+      }
+    }
   }
 
   private def runScheduledTasks()(implicit ec: ExecutionContext): Future[Unit] = {
@@ -57,8 +64,13 @@ class PScheduler(persistence: TasksPersistence,
         runTaskThanUpdateLastRun(now, task)
       })
     } yield ()
+    currentTaskRunFuture = tasksRunF
     tasksRunF.onComplete { _ =>
-      scheduledCheck = Some(checkScheduler.schedule(runScheduledTasks(), checkInterval))
+      synchronized {
+        if (ran) {
+          scheduledCheck = Some(checkScheduler.schedule(runScheduledTasks(), checkInterval))
+        }
+      }
     }
     tasksRunF
   }
@@ -91,8 +103,12 @@ class PScheduler(persistence: TasksPersistence,
     } yield ()
   }
 
-  def stop(): Unit = {
-    scheduledCheck.foreach(_.cancel())
+  def stop(): Future[Unit] = {
+    synchronized {
+      scheduledCheck.foreach(_.cancel())
+      ran = false
+    }
+    currentTaskRunFuture
   }
 }
 

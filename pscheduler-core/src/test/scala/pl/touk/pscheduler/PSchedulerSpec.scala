@@ -17,7 +17,7 @@ package pl.touk.pscheduler
 
 import java.time._
 
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.time.{Seconds, Millis, Span}
 import org.scalatest.{FlatSpec, Matchers, OptionValues}
@@ -25,7 +25,7 @@ import org.scalatest.{FlatSpec, Matchers, OptionValues}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class PSchedulerSpec extends FlatSpec with Matchers with OptionValues with ScalaFutures with PropertyChecks {
+class PSchedulerSpec extends FlatSpec with Matchers with OptionValues with ScalaFutures with Eventually with PropertyChecks {
 
   override implicit def patienceConfig = PatienceConfig(
     timeout = scaled(Span(5, Seconds)),
@@ -50,6 +50,7 @@ class PSchedulerSpec extends FlatSpec with Matchers with OptionValues with Scala
       savedTask.name shouldEqual taskName
       scheduler.stop()
     }
+    ()
   }
 
   val UTC = ZoneId.of("UTC")
@@ -78,10 +79,9 @@ class PSchedulerSpec extends FlatSpec with Matchers with OptionValues with Scala
         override protected def zone: ZoneId = UTC
       }
 
-      whenReady(scheduler.start()) { _ =>
-        ran shouldBe shouldRun
-        scheduler.stop()
-      }
+      scheduler.start()
+      eventually(ran shouldBe shouldRun)
+      scheduler.stop()
     }
   }
 }
