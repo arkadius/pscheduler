@@ -19,7 +19,7 @@ import _root_.slick.driver.JdbcDriver
 import _root_.slick.jdbc.JdbcBackend
 
 package object slick {
-  implicit class SlickJdbcPersistenceDefiner[P, CS, CI, C](builder: PSchedulerBuilder[P, CS, CI, C]) {
+  implicit class SlickJdbcPersistenceDefiner[EC, P, CS, CI, C](builder: PSchedulerBuilder[EC, P, CS, CI, C]) {
     def withSlickJdbcPersistence(driver: JdbcDriver, db: JdbcBackend.Database) =
       builder.withPersistence(new SlickJdbcTasksPersistence(driver, db))
   }

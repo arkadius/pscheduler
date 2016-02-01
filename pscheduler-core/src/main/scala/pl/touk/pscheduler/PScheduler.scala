@@ -16,6 +16,7 @@
 package pl.touk.pscheduler
 
 import java.time._
+import java.util.concurrent.Executors
 
 import org.slf4j.LoggerFactory
 
@@ -25,7 +26,8 @@ import scala.util.control.NonFatal
 class PScheduler(persistence: TasksPersistence,
                  checkScheduler: InMemoryScheduler,
                  checkInterval: Duration,
-                 configuration: Seq[TaskConfiguration]) {
+                 configuration: Seq[TaskConfiguration])
+                (implicit ec: ExecutionContext){
 
   protected def now: Instant = Instant.now()
 
@@ -37,7 +39,7 @@ class PScheduler(persistence: TasksPersistence,
   private var scheduledCheck: Option[Cancellable] = None
   @volatile var currentTaskRunFuture: Future[Unit] = Future.successful(Unit)
 
-  def start()(implicit ec: ExecutionContext): Unit = {
+  def start(): Unit = {
     synchronized {
       if (!ran) {
         ran = true
@@ -46,12 +48,11 @@ class PScheduler(persistence: TasksPersistence,
     }
   }
 
-  private def runScheduledTasks()(implicit ec: ExecutionContext): Future[Unit] = {
+  private def runScheduledTasks(): Future[Unit] = {
     runScheduledTasks(now)
   }
 
-  private def runScheduledTasks(now: Instant)
-                               (implicit ec: ExecutionContext): Future[Unit] = {
+  private def runScheduledTasks(now: Instant): Future[Unit] = {
     val tasksRunF = for {
       saved <- persistence.savedTasks
       _ = {
@@ -84,8 +85,7 @@ class PScheduler(persistence: TasksPersistence,
     )
   }
 
-  private def runTaskThanUpdateLastRun(now: Instant, task: TaskConfiguration)
-                                      (implicit ec: ExecutionContext): Future[Unit] = {
+  private def runTaskThanUpdateLastRun(now: Instant, task: TaskConfiguration): Future[Unit] = {
     logger.debug(s"Running task: ${task.taskName}")
     val taskRunF = task.run()
     taskRunF.onFailure {
@@ -114,7 +114,16 @@ class PScheduler(persistence: TasksPersistence,
 
 object PScheduler {
   import executor._
-  def builder = PSchedulerBuilder.withJavaScheduler().withCheckInterval(Duration.ofMinutes(5))
+
+  def builder = {
+    val executor = Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory())
+    val executionContext = ExecutionContext.fromExecutor(executor)
+    PSchedulerBuilder
+      .withExecutionContext(executionContext)
+      .withJavaScheduler(executor)
+      .withCheckInterval(Duration.ofMinutes(5))
+  }
+
 }
 
 case class TaskConfiguration(taskName: String, schedule: TaskSchedule, run: () => Future[Unit])

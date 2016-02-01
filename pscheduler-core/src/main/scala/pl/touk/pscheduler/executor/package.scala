@@ -18,7 +18,7 @@ package pl.touk.pscheduler
 import java.util.concurrent.{Executors, ScheduledExecutorService}
 
 package object executor {
-  implicit class ExecutorServiceSchedulerDefiner[P, CS, CI, C](builder: PSchedulerBuilder[P, CS, CI, C]) {
+  implicit class ExecutorServiceSchedulerDefiner[EC, P, CS, CI, C](builder: PSchedulerBuilder[EC, P, CS, CI, C]) {
     def withJavaScheduler(executor: ScheduledExecutorService) =
       builder.withCheckScheduler(new ExecutorServiceScheduler(executor))
 

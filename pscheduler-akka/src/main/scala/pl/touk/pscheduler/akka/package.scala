@@ -17,15 +17,12 @@ package pl.touk.pscheduler
 
 import _root_.akka.actor.{ActorSystem, Scheduler}
 
-import scala.concurrent.ExecutionContext
-
 package object akka {
-  implicit class AkkaSchedulerDefiner[P, CS, CI, C](builder: PSchedulerBuilder[P, CS, CI, C]) {
-    def withAkkaScheduler(scheduler: Scheduler)
-                         (implicit ec: ExecutionContext) =
-      builder.withCheckScheduler(new AkkaScheduler(scheduler, ec))
+  implicit class AkkaSchedulerDefiner[P, CS, CI, C](builder: PSchedulerBuilder[Defined, P, CS, CI, C]) {
+    def withAkkaScheduler(system: ActorSystem): PSchedulerBuilder[Defined, P, Defined, CI, C]  =
+      withAkkaScheduler(system.scheduler)
 
-    def withAkkaScheduler(system: ActorSystem) =
-      builder.withCheckScheduler(new AkkaScheduler(system.scheduler, system.dispatcher))
+    def withAkkaScheduler(scheduler: Scheduler): PSchedulerBuilder[Defined, P, Defined, CI, C] =
+      builder.withCheckScheduler(new AkkaScheduler(scheduler, builder.definedExecutionContext.get))
   }
 }

@@ -32,9 +32,11 @@ trait CreatingTasksTableMigration extends SlickJdbcMigration {
 
   val tasks = TableQuery[TaskEntity]
 
+  protected val taskNameLength: Int = 32
+
   class TaskEntity(tag: Tag) extends Table[Task](tag, "tasks") {
 
-    def name = column[String]("name", NotNull, O.PrimaryKey, O.Length(32))
+    def name = column[String]("name", NotNull, O.PrimaryKey, O.Length(taskNameLength))
     def lastRun = column[Timestamp]("last_run", NotNull)
 
     def * = (name, lastRun) <> (createTask _ tupled, extractTask)

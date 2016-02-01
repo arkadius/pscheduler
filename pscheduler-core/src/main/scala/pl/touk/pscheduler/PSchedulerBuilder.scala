@@ -17,37 +17,42 @@ package pl.touk.pscheduler
 
 import java.time.Duration
 
+import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 
-class PSchedulerBuilder[+P, +CS, +CI, +C](private[pscheduler] val definedPersistence: Option[TasksPersistence],
-                                          private[pscheduler] val definedCheckScheduler: Option[InMemoryScheduler],
-                                          private[pscheduler] val definedCheckInterval: Option[Duration],
-                                          private[pscheduler] val definedConfiguration: Option[Seq[TaskConfiguration]]) {
-  
-  def withPersistence(persistence: TasksPersistence): PSchedulerBuilder[Defined, CS, CI, C] =
-    new PSchedulerBuilder(Some(persistence), definedCheckScheduler, definedCheckInterval, definedConfiguration)
+class PSchedulerBuilder[+EC, +P, +CS, +CI, +C](private[pscheduler] val definedExecutionContext: Option[ExecutionContext],
+                                               private[pscheduler] val definedPersistence: Option[TasksPersistence],
+                                               private[pscheduler] val definedCheckScheduler: Option[InMemoryScheduler],
+                                               private[pscheduler] val definedCheckInterval: Option[Duration],
+                                               private[pscheduler] val definedConfiguration: Option[Seq[TaskConfiguration]]) {
 
-  def withCheckScheduler(checkScheduler: InMemoryScheduler): PSchedulerBuilder[P, Defined, CI, C] =
-    new PSchedulerBuilder(definedPersistence, Some(checkScheduler), definedCheckInterval, definedConfiguration)
+  def withExecutionContext(executionContext: ExecutionContext): PSchedulerBuilder[Defined, P, CS, CI, C] =
+    new PSchedulerBuilder(Some(executionContext), definedPersistence, definedCheckScheduler, definedCheckInterval, definedConfiguration)
 
-  def withCheckInterval(checkInterval: Duration): PSchedulerBuilder[P, CS, Defined, C] =
-    new PSchedulerBuilder(definedPersistence, definedCheckScheduler, Some(checkInterval), definedConfiguration)
+  def withPersistence(persistence: TasksPersistence): PSchedulerBuilder[EC, Defined, CS, CI, C] =
+    new PSchedulerBuilder(definedExecutionContext, Some(persistence), definedCheckScheduler, definedCheckInterval, definedConfiguration)
 
-  def withTasks(configuration: TaskConfiguration*): PSchedulerBuilder[P, CS, CI, Defined] =
-    new PSchedulerBuilder(definedPersistence, definedCheckScheduler, definedCheckInterval, Some(configuration))
+  def withCheckScheduler(checkScheduler: InMemoryScheduler): PSchedulerBuilder[EC, P, Defined, CI, C] =
+    new PSchedulerBuilder(definedExecutionContext, definedPersistence, Some(checkScheduler), definedCheckInterval, definedConfiguration)
+
+  def withCheckInterval(checkInterval: Duration): PSchedulerBuilder[EC, P, CS, Defined, C] =
+    new PSchedulerBuilder(definedExecutionContext, definedPersistence, definedCheckScheduler, Some(checkInterval), definedConfiguration)
+
+  def withTasks(configuration: TaskConfiguration*): PSchedulerBuilder[EC, P, CS, CI, Defined] =
+    new PSchedulerBuilder(definedExecutionContext, definedPersistence, definedCheckScheduler, definedCheckInterval, Some(configuration))
   
 }
 
 trait Defined
 
-object PSchedulerBuilder extends PSchedulerBuilder(None, None, None, None) {
+object PSchedulerBuilder extends PSchedulerBuilder(None, None, None, None, None) {
 
-  implicit class FullyConfigured(builder: PSchedulerBuilder[Defined, Defined, Defined, Defined]) {
+  implicit class FullyConfigured(builder: PSchedulerBuilder[Defined, Defined, Defined, Defined, Defined]) {
     def build: PScheduler = new PScheduler(
       persistence = builder.definedPersistence.get,
       checkScheduler = builder.definedCheckScheduler.get,
       checkInterval = builder.definedCheckInterval.get,
       configuration = builder.definedConfiguration.get
-    )
+    )(builder.definedExecutionContext.get)
   }
 }
