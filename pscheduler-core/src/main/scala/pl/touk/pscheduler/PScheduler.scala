@@ -70,6 +70,8 @@ class PScheduler(persistence: TasksPersistence,
       synchronized {
         if (ran) {
           scheduledCheck = Some(checkScheduler.schedule(runScheduledTasks(), checkInterval))
+        } else {
+          logger.debug(s"Scheduler is stopping, next check will be skipped")
         }
       }
     }
