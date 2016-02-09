@@ -21,6 +21,7 @@ import java.util.concurrent.Executors
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 import scala.util.control.NonFatal
 
 class PScheduler(persistence: TasksPersistence,
@@ -37,7 +38,7 @@ class PScheduler(persistence: TasksPersistence,
 
   private var ran: Boolean = false
   private var scheduledCheck: Option[Cancellable] = None
-  @volatile var currentTaskRunFuture: Future[Unit] = Future.successful(Unit)
+  private var currentTaskRunFuture: Future[Unit] = Future.successful(Unit)
 
   def start(): Unit = {
     synchronized {
@@ -48,12 +49,22 @@ class PScheduler(persistence: TasksPersistence,
     }
   }
 
-  private def runScheduledTasks(): Future[Unit] = {
+  private def runScheduledTasks(): Unit = {
     runScheduledTasks(now)
   }
 
-  private def runScheduledTasks(now: Instant): Future[Unit] = {
-    val tasksRunF = for {
+  private def runScheduledTasks(now: Instant): Unit = {
+    synchronized {
+      if (ran) {
+        val tasksRunF = runTasksIfNeed(now)
+        currentTaskRunFuture = tasksRunF
+        tasksRunF onComplete reschedule
+      }
+    }
+  }
+
+  private def runTasksIfNeed(now: Instant): Future[Unit] = {
+    for {
       saved <- persistence.savedTasks
       _ = {
         logger.debug(saved.mkString("Fetched tasks:\n", "\n", "\nChecking if some of them should be run"))
@@ -65,17 +76,6 @@ class PScheduler(persistence: TasksPersistence,
         runTaskThanUpdateLastRun(now, task)
       })
     } yield ()
-    currentTaskRunFuture = tasksRunF
-    tasksRunF.onComplete { _ =>
-      synchronized {
-        if (ran) {
-          scheduledCheck = Some(checkScheduler.schedule(runScheduledTasks(), checkInterval))
-        } else {
-          logger.debug(s"Scheduler is stopping, next check will be skipped")
-        }
-      }
-    }
-    tasksRunF
   }
 
   private def shouldRunNow(savedByName: Map[String, Task], now: Instant)
@@ -105,12 +105,22 @@ class PScheduler(persistence: TasksPersistence,
     } yield ()
   }
 
+  private def reschedule(result: Try[Unit]) = {
+    synchronized {
+      if (ran) {
+        scheduledCheck = Some(checkScheduler.schedule(runScheduledTasks(), checkInterval))
+      } else {
+        logger.debug(s"Scheduler is stopping, next check will be skipped")
+      }
+    }
+  }
+
   def stop(): Future[Unit] = {
     synchronized {
       scheduledCheck.foreach(_.cancel())
       ran = false
+      currentTaskRunFuture
     }
-    currentTaskRunFuture
   }
 }
 

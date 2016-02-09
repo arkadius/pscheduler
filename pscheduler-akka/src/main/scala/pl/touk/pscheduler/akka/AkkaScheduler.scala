@@ -24,7 +24,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.FiniteDuration
 
 class AkkaScheduler(scheduler: akka.actor.Scheduler, ec: ExecutionContext) extends InMemoryScheduler {
-  override def schedule(job: => Future[Unit], interval: Duration): Cancellable = {
+  override def schedule(job: => Unit, interval: Duration): Cancellable = {
     val scheduledJob = scheduler.scheduleOnce(FiniteDuration(interval.toMillis, TimeUnit.MILLISECONDS))(job)(ec)
     new Cancellable {
       override def cancel(): Unit = scheduledJob.cancel()

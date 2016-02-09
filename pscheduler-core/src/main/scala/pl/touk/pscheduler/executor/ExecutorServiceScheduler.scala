@@ -23,7 +23,7 @@ import pl.touk.pscheduler.{Cancellable, InMemoryScheduler}
 import scala.concurrent.Future
 
 class ExecutorServiceScheduler(executor: ScheduledExecutorService) extends InMemoryScheduler {
-  override def schedule(job: => Future[Unit], interval: Duration): Cancellable = {
+  override def schedule(job: => Unit, interval: Duration): Cancellable = {
     val future = executor.schedule(new Runnable {
       override def run(): Unit = job
     }, interval.toMillis, TimeUnit.MILLISECONDS)
